@@ -1,0 +1,14 @@
+# Security: Secrets & Environment Variables
+.env
+.env.*
+
+# Security: Google Cloud Service Account Credentials
+*.json
+
+# Python standard exclusions
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.pytest_cache/

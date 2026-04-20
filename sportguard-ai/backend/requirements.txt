@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+tensorflow
+numpy
+google-cloud-vision
+google-cloud-firestore
+google-cloud-storage
+python-multipart
+google-generativeai
+python-dotenv
