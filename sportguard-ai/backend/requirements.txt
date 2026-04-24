@@ -6,5 +6,10 @@ google-cloud-vision
 google-cloud-firestore
 google-cloud-storage
 python-multipart
-google-generativeai
+google-genai
 python-dotenv
+pillow
+imagehash
+opencv-python
+slowapi
+httpx

@@ -1,9 +1,11 @@
 from fastapi import FastAPI, UploadFile, File
 from engine.phash import generate_phash
 from core.gcp_clients import GCPClients
-from cybersecurity.watermarking import apply_lsb_watermark # Partner's module
+from cybersecurity.watermarking import embed_watermark # Partner's module
+from api.routes import router as api_router
 
 app = FastAPI(title="SportGuard AI Core")
+app.include_router(api_router)
 
 @app.post("/protect-media")
 async def protect_media(file: UploadFile = File(...)):
@@ -16,7 +18,8 @@ async def protect_media(file: UploadFile = File(...)):
 
     # 2. Cybersecurity Layer: Digital Watermarking [cite: 8, 24]
     # This is where your partner's LSB logic integrates seamlessly.
-    watermarked_path = apply_lsb_watermark(temp_path, owner_id="SG_2026_SHAMBHAVI")
+    watermarked_path = f"wm_{temp_path}"
+    embed_watermark(temp_path, "SG_2026_SHAMBHAVI", watermarked_path)
 
     # 3. Vision API Web Detection [cite: 7, 20, 25]
     vision_client = GCPClients.get_vision()

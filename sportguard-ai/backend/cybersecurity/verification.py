@@ -1,6 +1,6 @@
 import imagehash
-from hashing import HashingEngine
-from watermarking import extract_watermark
+from cybersecurity.hashing import HashingEngine
+from cybersecurity.watermarking import extract_watermark
 
 class VerificationEngine:
     @staticmethod

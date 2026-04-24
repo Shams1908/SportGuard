@@ -1,14 +1,14 @@
 import urllib.parse
-import google.generativeai as genai
-from core.config import Config
+from google import genai
+from core.config import settings
 
 def draft_legal_notice(infringement_metadata: dict):
     """
     Uses Gemini to draft a professional, localized DMCA/Cease & Desist notice 
     based on the origin of the infringement.
     """
-    # Initialize the model
-    model = genai.GenerativeModel('gemini-1.5-pro')
+    # Initialize the client
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
     
     # Extract the TLD from the URL to determine language localization
     target_url = infringement_metadata.get('url', '')
@@ -40,5 +40,8 @@ def draft_legal_notice(infringement_metadata: dict):
     """
     
     # Generate the legal notice
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model='gemini-1.5-pro',
+        contents=prompt
+    )
     return response.text

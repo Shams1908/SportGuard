@@ -4,6 +4,7 @@ class GCPClients:
     """Singleton to manage GCP services efficiently."""
     _vision_client = None
     _db = None
+    _storage_client = None
 
     @classmethod
     def get_vision(cls):
@@ -16,3 +17,9 @@ class GCPClients:
         if cls._db is None:
             cls._db = firestore.Client()
         return cls._db
+
+    @classmethod
+    def get_storage(cls):
+        if cls._storage_client is None:
+            cls._storage_client = storage.Client()
+        return cls._storage_client

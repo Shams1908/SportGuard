@@ -16,7 +16,7 @@ def embed_watermark(image_path, brand_id, output_path):
     for i, bit in enumerate(binary_secret):
         if i < len(flattened):
             # Adjust the Least Significant Bit [cite: 137]
-            flattened[i] = (flattened[i] & ~1) | int(bit)
+            flattened[i] = (flattened[i] & 254) | int(bit)
         
     new_data = flattened.reshape(data.shape)
     # MUST save as PNG to maintain data integrity [cite: 146, 223]

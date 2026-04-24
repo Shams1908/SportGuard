@@ -1,8 +1,8 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Request
-from hashing import HashingEngine
-from verification import VerificationEngine
-from vault_service import VaultService
-from security_utils import limiter, validate_user_integrity
+from cybersecurity.hashing import HashingEngine
+from cybersecurity.verification import VerificationEngine
+from cybersecurity.vault_service import VaultService
+from cybersecurity.security_utils import limiter, validate_user_integrity
 
 router = APIRouter()
 
