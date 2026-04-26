@@ -1,5 +1,5 @@
 import uuid
-from .hashing import HashingEngine
+from cybersecurity.hashing import HashingEngine
 
 def prepare_metadata(image_bytes: bytes, owner_id: str):
     """Packages hashes and IDs for Firestore storage[cite: 200]."""
