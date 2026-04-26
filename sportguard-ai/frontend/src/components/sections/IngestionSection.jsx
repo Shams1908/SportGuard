@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { C } from "../../constants/theme";
 
 export default function IngestionSection() {
@@ -7,6 +7,8 @@ export default function IngestionSection() {
   const [file, setFile] = useState(null);
   const [stage, setStage] = useState(-1);
   const [log, setLog] = useState([]);
+  const [verifying, setVerifying] = useState(false);
+  const [verifyLog, setVerifyLog] = useState([]);
 
   const stages = [
     { label: "IDENTITY SHIELD", color: C.orange, detail: "Zero Trust token validation · Anti-DoS check" },
@@ -36,8 +38,25 @@ export default function IngestionSection() {
         if (i === 2) setStage(0);
         if (i === 6) setStage(1);
         if (i === 9) setStage(2);
-      }, i * 600);
+      }, i * 400);
     });
+  };
+
+  const handleVerifyHandshake = () => {
+    setVerifying(true);
+    setVerifyLog([]);
+    const vMsgs = [
+      "> INITIALIZING ZERO TRUST HANDSHAKE...",
+      "> REQUESTING AUTHENTICATOR CHALLENGE...",
+      "> VERIFYING HARDWARE-BACKED KEYS...",
+      "> C2PA MANIFEST SIGNATURE: AUTHENTIC",
+      "> TRUST RELATIONSHIP ESTABLISHED ✓"
+    ];
+    vMsgs.forEach((m, i) => {
+      setTimeout(() => setVerifyLog(prev => [...prev, m]), i * 600);
+    });
+    // Auto-close after 4 seconds
+    setTimeout(() => setVerifying(false), 4000);
   };
 
   return (
@@ -47,8 +66,38 @@ export default function IngestionSection() {
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 0.5 }}
       id="ingestion"
-      style={{ padding: "60px 40px", background: C.bg, borderBottom: `4px solid ${C.orange}` }}
+      style={{ padding: "60px 40px", background: C.bg, borderBottom: `4px solid ${C.orange}`, position: "relative" }}
     >
+      {/* --- HANDSHAKE MODAL OVERLAY --- */}
+      <AnimatePresence>
+        {verifying && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: "absolute", inset: 0, zIndex: 50, background: `${C.dark}F2`, display: "flex", alignItems: "center", justifyContent: "center", padding: "40px" }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+              style={{ border: `4px solid ${C.yellow}`, background: C.dark, padding: "32px", width: "100%", maxWidth: "600px", boxShadow: `12px 12px 0px ${C.orange}` }}
+            >
+              <div className="pixel" style={{ color: C.yellow, fontSize: "2rem", marginBottom: "24px", borderBottom: `2px solid ${C.yellow}`, paddingBottom: "8px" }}>
+                ◈ SECURE VERIFICATION HANDSHAKE
+              </div>
+              <div className="mono" style={{ fontSize: "0.9rem", minHeight: "150px" }}>
+                {verifyLog.map((l, i) => (
+                  <div key={i} style={{ color: l.includes("✓") ? C.green : C.text, marginBottom: "8px" }}>{l}</div>
+                ))}
+                {verifyLog.length < 5 && <span className="blink terminal-cursor"></span>}
+              </div>
+              {verifyLog.length === 5 && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginTop: "20px", padding: "12px", border: `2px solid ${C.green}`, color: C.green, textAlign: "center" }} className="pixel">
+                  SYSTEM IDENTITY CONFIRMED
+                </motion.div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div style={{ marginBottom: "16px" }}><span className="tag tag-orange">PIPELINE</span></div>
       <h2 className="pixel" style={{ fontSize: "clamp(2rem,4vw,3rem)", margin: "0 0 8px", color: C.orange }}>
         #INGESTION — ASSET PIPELINE
@@ -57,6 +106,7 @@ export default function IngestionSection() {
         Drag a media asset to trigger the full Zero Trust → pHASH → C2PA protection pipeline
       </p>
 
+      {/* Pipeline Stages Grid */}
       <div style={{ display: "flex", alignItems: "center", gap: "0", marginBottom: "40px", flexWrap: "wrap" }}>
         {stages.map(({ label, color, detail }, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", flex: 1, minWidth: "200px" }}>
@@ -85,7 +135,8 @@ export default function IngestionSection() {
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0", border: `4px solid ${C.mid}` }}>
+      {/* Drop Zone & Terminal */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "0", border: `4px solid ${C.mid}` }}>
         <div
           onDragOver={e => { e.preventDefault(); setDragging(true); }}
           onDragLeave={() => setDragging(false)}
@@ -107,8 +158,10 @@ export default function IngestionSection() {
             {file ? `◈ ${file}` : "DROP MEDIA ASSET HERE"}
           </div>
           {file && (
-            <div style={{ marginTop: "20px", display: "flex", gap: "12px" }}>
-              <button className="btn-yellow" onClick={simulate}>▶ RUN PIPELINE</button>
+            <div style={{ marginTop: "20px", display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
+              <button className="btn-yellow" onClick={simulate} disabled={stage >= 0 && stage < 2}>
+                {stage >= 0 && stage < 2 ? "◎ PROCESSING..." : "▶ RUN PIPELINE"}
+              </button>
               <button className="btn-ghost" onClick={() => { setFile(null); setStage(-1); setLog([]); }}>✕ CLEAR</button>
             </div>
           )}
@@ -120,6 +173,18 @@ export default function IngestionSection() {
           {log.map((l, i) => <div key={i} style={{ color: l.includes("✓") ? C.green : l.includes("PASS") ? C.green : C.text, marginBottom: "4px" }}>{l}</div>)}
           {stage === 2 && <div style={{ marginTop: "16px", padding: "8px", border: `2px solid ${C.green}`, color: C.green }}>✓ PIPELINE COMPLETE — Asset protection record created</div>}
         </div>
+      </div>
+
+      {/* Verify manifest button */}
+      <div style={{ marginTop: "24px", display: "flex", gap: "16px", alignItems: "center", flexWrap: "wrap" }}>
+        <button
+          className="btn-yellow" // This is the magic link to the CSS above!
+          onClick={handleVerifyHandshake}
+          disabled={verifying}
+        >
+          ◈ VERIFY MANIFEST
+        </button>
+        <span className="mono" style={{ fontSize: "0.75rem", color: C.muted }}>Validate C2PA chain-of-custody for any ingested asset</span>
       </div>
     </motion.section>
   );
