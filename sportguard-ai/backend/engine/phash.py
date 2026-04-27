@@ -2,24 +2,31 @@ import tensorflow as tf
 from tensorflow.keras.applications.vgg16 import VGG16, preprocess_input
 from tensorflow.keras.preprocessing import image
 import numpy as np
+import io
 
 # Load pre-trained VGG16 (excluding top layers for feature extraction)
 model = VGG16(weights='imagenet', include_top=False, pooling='avg')
 
-def generate_phash(img_path: str):
+def generate_phash(img_source):
     """
     Generates a perceptual hash fingerprint using CNN activations.
+    img_source can be a string path or a file-like stream object.
     """
-    img = image.load_img(img_path, target_size=(224, 224))
+    if hasattr(img_source, 'read'):
+        img_source.seek(0)
+        img = image.load_img(io.BytesIO(img_source.read()), target_size=(224, 224))
+    else:
+        img = image.load_img(img_source, target_size=(224, 224))
+        
     x = image.img_to_array(img)
     x = np.expand_dims(x, axis=0)
     x = preprocess_input(x)
 
     features = model.predict(x)
-    # Convert feature vector to a binary string (pHash)
+    # Convert feature vector to a binary list (pHash)
     hash_threshold = np.median(features)
-    binary_hash = "".join(['1' if f > hash_threshold else '0' for f in features.flatten()])
-    return binary_hash
+    binary_hash_array = np.array([1 if f > hash_threshold else 0 for f in features.flatten()])
+    return binary_hash_array.tolist()
 
 def calculate_hamming_distance(hash1: str, hash2: str) -> int:
     """

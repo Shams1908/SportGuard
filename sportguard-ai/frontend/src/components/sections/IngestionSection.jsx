@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { C } from "../../constants/theme";
 
@@ -9,6 +9,7 @@ export default function IngestionSection() {
   const [log, setLog] = useState([]);
   const [verifying, setVerifying] = useState(false);
   const [verifyLog, setVerifyLog] = useState([]);
+  const fileInputRef = useRef(null);
 
   const stages = [
     { label: "IDENTITY SHIELD", color: C.orange, detail: "Zero Trust token validation · Anti-DoS check" },
@@ -17,7 +18,7 @@ export default function IngestionSection() {
   ];
 
   // --- NEW: The actual backend connection ---
-  const uploadToBackend = async (selectedFile) => {
+  const handleUpload = async (selectedFile) => {
     const formData = new FormData();
     formData.append("file", selectedFile);
 
@@ -41,9 +42,6 @@ export default function IngestionSection() {
     if (!file) return;
     setStage(-1);
     setLog([]);
-
-    // --- NEW: Trigger the backend upload simultaneously ---
-    uploadToBackend(file);
 
     const msgs = [
       `[IDENTITY] Validating Zero Trust token for ${file.name}...`, // Updated to use file.name
@@ -162,6 +160,18 @@ export default function IngestionSection() {
 
       {/* Drop Zone & Terminal */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "0", border: `4px solid ${C.mid}` }}>
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          style={{ display: "none" }} 
+          onChange={(e) => {
+            const f = e.target.files[0];
+            if (f) {
+              setFile(f);
+              handleUpload(f);
+            }
+          }} 
+        />
         <div
           onDragOver={e => { e.preventDefault(); setDragging(true); }}
           onDragLeave={() => setDragging(false)}
@@ -169,9 +179,12 @@ export default function IngestionSection() {
             e.preventDefault();
             setDragging(false);
             const f = e.dataTransfer.files[0];
-            // --- NEW: Store the whole file object, not just f.name ---
-            if (f) setFile(f);
+            if (f) {
+              setFile(f);
+              handleUpload(f);
+            }
           }}
+          onClick={() => fileInputRef.current.click()}
           style={{
             minHeight: "220px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
             background: dragging ? `${C.orange}15` : C.dark,
@@ -186,15 +199,14 @@ export default function IngestionSection() {
             <rect x="1" y="12" width="14" height="3" fill={dragging ? C.orange : C.muted} />
           </svg>
           <div className="pixel" style={{ color: dragging ? C.orange : C.muted, fontSize: "1.3rem", textAlign: "center" }}>
-            {/* --- NEW: Read from file.name since file is now an object --- */}
             {file ? `◈ ${file.name}` : "DROP MEDIA ASSET HERE"}
           </div>
           {file && (
             <div style={{ marginTop: "20px", display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
-              <button className="btn-yellow" onClick={simulate} disabled={stage >= 0 && stage < 2}>
+              <button className="btn-yellow" onClick={(e) => { e.stopPropagation(); simulate(); }} disabled={stage >= 0 && stage < 2}>
                 {stage >= 0 && stage < 2 ? "◎ PROCESSING..." : "▶ RUN PIPELINE"}
               </button>
-              <button className="btn-ghost" onClick={() => { setFile(null); setStage(-1); setLog([]); }}>✕ CLEAR</button>
+              <button className="btn-ghost" onClick={(e) => { e.stopPropagation(); setFile(null); setStage(-1); setLog([]); }}>✕ CLEAR</button>
             </div>
           )}
         </div>

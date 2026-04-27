@@ -1,13 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { C } from "../../constants/theme";
 import useCounter from "../../hooks/useCounter";
+import { collection, onSnapshot, query } from "firebase/firestore";
+import { db } from "../../firebase";
 
 export default function StatsSection() {
   const [started, setStarted] = useState(false);
+  const [liveAssetCount, setLiveAssetCount] = useState(12847);
+
+  // Fetch real-time count of protected assets containing an asset_id
+  useEffect(() => {
+    const q = query(collection(db, "protected_assets"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      // Specifically count documents that have an asset_id present
+      const validAssets = snapshot.docs.filter(doc => doc.data().asset_id);
+      if (validAssets.length > 0) {
+        setLiveAssetCount(validAssets.length);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   // These hooks trigger only when 'started' becomes true
-  const a = useCounter(12847, 2500, started);
+  const a = useCounter(liveAssetCount, 2500, started);
   const b = useCounter(3291, 2200, started);
   const c = useCounter(847, 2000, started);
   const d = useCounter(99, 1800, started);

@@ -17,18 +17,36 @@ export default function LegalSection({ target: incomingTarget }) {
   // Sync with Radar clicks & Auto-Launch
   useEffect(() => {
     if (incomingTarget) {
-      setTarget(incomingTarget);
+      const activeUrl = typeof incomingTarget === 'string' ? incomingTarget : incomingTarget.url;
+      setTarget(activeUrl);
       // Smooth scroll to the terminal
       document.getElementById("legal")?.scrollIntoView({ behavior: "smooth" });
-      // Automatically start drafting!
-      launch(incomingTarget);
+
+      if (incomingTarget.legal_draft) {
+        setLoading(true);
+        setNotice(null);
+        setTypedNotice("");
+        setTimeout(() => {
+          setLoading(false);
+          setNotice(incomingTarget.legal_draft);
+          let i = 0;
+          const tick = setInterval(() => {
+            i++;
+            setTypedNotice(incomingTarget.legal_draft.slice(0, i * 4));
+            if (i * 4 >= incomingTarget.legal_draft.length) clearInterval(tick);
+          }, 10);
+        }, 1500);
+      } else {
+        // Automatically start drafting!
+        launch(activeUrl);
+      }
     }
   }, [incomingTarget]);
 
-  // NEW: Auto-scroll terminal text as it types
+  // NEW: Auto-scroll terminal text as it types (safeguarded against page-load hijack)
   useEffect(() => {
-    if (terminalEndRef.current) {
-      terminalEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (typedNotice && terminalEndRef.current) {
+      terminalEndRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   }, [typedNotice]);
 

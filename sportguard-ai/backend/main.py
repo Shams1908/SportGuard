@@ -1,17 +1,26 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Request
 from engine.phash import generate_phash
 from core.gcp_clients import GCPClients
 from cybersecurity.watermarking import embed_watermark # Partner's module
 from api.routes import router as api_router
-from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from google.cloud import firestore
+from fastapi.responses import JSONResponse
+import traceback
 
 app = FastAPI(title="SportGuard AI Core")
 app.include_router(api_router)
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal Server Error: {str(exc)}", "trace": traceback.format_exc()}
+    )
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"], # Your Vite dev server
+    allow_origins=["*"], # Allow all origins for testing
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

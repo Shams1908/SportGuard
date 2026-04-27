@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/gcp-key.json
+      # Pass through the Gemini API Key or other env vars if present in .env
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app # For hot reloading during local dev if needed, or mapping gcp-key.json
+
+  frontend:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"

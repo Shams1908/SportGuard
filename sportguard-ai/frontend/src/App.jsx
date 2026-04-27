@@ -10,10 +10,10 @@ import Footer from './components/layout/Footer';
 
 export default function App() {
   // 1. Initialize as 'null' so the terminal waits for a command
-  const [strikeURL, setStrikeURL] = useState(null);
+  const [strikeData, setStrikeData] = useState(null);
 
-  const handleTriggerStrike = (url) => {
-    setStrikeURL(url);
+  const handleTriggerStrike = (data) => {
+    setStrikeData(data);
     // Note: LegalSection also has an auto-scroll, but having it here acts as a great backup!
     document.getElementById("legal")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -32,7 +32,7 @@ export default function App() {
       <RadarSection onTriggerStrike={handleTriggerStrike} />
 
       {/* 3. Pass it down using the 'target' prop to match LegalSection.jsx */}
-      <LegalSection target={strikeURL} />
+      <LegalSection target={strikeData} />
 
       <ExplorerSection />
       <Footer />
