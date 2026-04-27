@@ -3,9 +3,19 @@ from engine.phash import generate_phash
 from core.gcp_clients import GCPClients
 from cybersecurity.watermarking import embed_watermark # Partner's module
 from api.routes import router as api_router
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="SportGuard AI Core")
 app.include_router(api_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"], # Your Vite dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/protect-media")
 async def protect_media(file: UploadFile = File(...)):

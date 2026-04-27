@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { C } from "../../constants/theme";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { db } from "../../firebase"; // Ensure this path matches where you put firebase.js
 
 export default function RadarSection({ onTriggerStrike }) {
   const [scanning, setScanning] = useState(false);
-  const [results, setResults] = useState(null);
+  const [showResults, setShowResults] = useState(false);
+  const [liveAlerts, setLiveAlerts] = useState([]);
 
   const fakeResults = [
     { url: "https://illegalstream.io/sports/clips/ufc_r45", match: "97.3%", platform: "Rogue Stream Site", status: "MATCH", geo: "RU" },
@@ -12,11 +15,40 @@ export default function RadarSection({ onTriggerStrike }) {
     { url: "https://reddit.com/r/soccer/comments/abc123", match: "89.7%", platform: "Reddit", status: "REVIEW", geo: "US" },
   ];
 
+  // --- NEW: Real-time Firestore Listener ---
+  useEffect(() => {
+    // Listen to the "infringements" collection, ordered by newest first
+    const q = query(collection(db, "infringements"), orderBy("timestamp", "desc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      console.log("Live Radar Update:", data);
+      setLiveAlerts(data);
+    }, (error) => {
+      console.error("Firestore Listener Error:", error);
+    });
+
+    // Cleanup listener on component unmount
+    return () => unsubscribe();
+  }, []);
+
   const scan = () => {
     setScanning(true);
-    setResults(null);
-    setTimeout(() => { setScanning(false); setResults(fakeResults); }, 3000);
+    setShowResults(false);
+
+    // Simulate the time it takes for the scan to run
+    setTimeout(() => {
+      setScanning(false);
+      setShowResults(true); // Reveal the table after 3 seconds
+    }, 3000);
   };
+
+  // Smart fallback: Use live data if available, otherwise use fake data for testing
+  const displayData = liveAlerts.length > 0 ? liveAlerts : fakeResults;
 
   return (
     <motion.section
@@ -79,10 +111,11 @@ export default function RadarSection({ onTriggerStrike }) {
         )}
       </AnimatePresence>
 
-      {results && (
+      {/* --- NEW: Renders using displayData (Live data OR fakeResults) --- */}
+      {showResults && (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ border: `4px solid ${C.orange}` }}>
           <div style={{ background: C.orange, padding: "8px 16px", display: "flex", justifyContent: "space-between" }}>
-            <span className="pixel" style={{ color: C.dark, fontSize: "1.2rem" }}>◈ {results.length} INFRINGEMENTS DETECTED</span>
+            <span className="pixel" style={{ color: C.dark, fontSize: "1.2rem" }}>◈ {displayData.length} INFRINGEMENTS DETECTED</span>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", minWidth: "600px" }}>
@@ -94,11 +127,14 @@ export default function RadarSection({ onTriggerStrike }) {
                 </tr>
               </thead>
               <tbody>
-                {results.map((r, i) => (
-                  <tr key={i} style={{ background: i % 2 === 0 ? C.dark : "#1A1A1A", borderBottom: `1px solid ${C.mid}` }}>
-                    <td className="mono" style={{ padding: "10px 12px", fontSize: "0.75rem", color: C.text }}>{r.geo}</td>
-                    <td className="mono" style={{ padding: "10px 12px", fontSize: "0.75rem", color: C.text }}>{r.platform}</td>
-                    <td className="pixel" style={{ padding: "10px 12px", fontSize: "1.1rem", color: parseFloat(r.match) > 95 ? C.red : C.yellow }}>{r.match}</td>
+                {displayData.map((r, i) => (
+                  <tr key={r.id || i} style={{ background: i % 2 === 0 ? C.dark : "#1A1A1A", borderBottom: `1px solid ${C.mid}` }}>
+                    <td className="mono" style={{ padding: "10px 12px", fontSize: "0.75rem", color: C.text }}>{r.geo || "N/A"}</td>
+                    <td className="mono" style={{ padding: "10px 12px", fontSize: "0.75rem", color: C.text }}>{r.platform || "Unknown"}</td>
+                    {/* Handles both strings like "97.3%" and raw numbers from Firestore */}
+                    <td className="pixel" style={{ padding: "10px 12px", fontSize: "1.1rem", color: parseFloat(r.match) > 95 ? C.red : C.yellow }}>
+                      {typeof r.match === 'number' ? `${r.match}%` : r.match}
+                    </td>
                     <td className="mono" style={{ padding: "10px 12px", fontSize: "0.65rem", color: C.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.url}</td>
                     <td style={{ padding: "10px 12px" }}>
                       <button className="btn-ghost" style={{ fontSize: "0.7rem", borderColor: C.orange, color: C.orange }} onClick={() => onTriggerStrike(r.url)}>STRIKE →</button>

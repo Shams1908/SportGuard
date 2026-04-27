@@ -9,10 +9,12 @@ import ExplorerSection from './components/sections/ExplorerSection';
 import Footer from './components/layout/Footer';
 
 export default function App() {
-  const [strikeURL, setStrikeURL] = useState("https://illegalstream.io/sports/clips/ufc_r45");
+  // 1. Initialize as 'null' so the terminal waits for a command
+  const [strikeURL, setStrikeURL] = useState(null);
 
   const handleTriggerStrike = (url) => {
     setStrikeURL(url);
+    // Note: LegalSection also has an auto-scroll, but having it here acts as a great backup!
     document.getElementById("legal")?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -25,8 +27,13 @@ export default function App() {
       <HeroSection />
       <StatsSection />
       <IngestionSection />
+
+      {/* 2. Radar passes the URL up when STRIKE is clicked */}
       <RadarSection onTriggerStrike={handleTriggerStrike} />
-      <LegalSection externalTarget={strikeURL} />
+
+      {/* 3. Pass it down using the 'target' prop to match LegalSection.jsx */}
+      <LegalSection target={strikeURL} />
+
       <ExplorerSection />
       <Footer />
     </div>

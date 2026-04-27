@@ -4,7 +4,7 @@ import { C } from "../../constants/theme";
 
 export default function IngestionSection() {
   const [dragging, setDragging] = useState(false);
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState(null); // Will now store the actual File object
   const [stage, setStage] = useState(-1);
   const [log, setLog] = useState([]);
   const [verifying, setVerifying] = useState(false);
@@ -16,15 +16,40 @@ export default function IngestionSection() {
     { label: "CYBER SEAL", color: C.purple, detail: "LSB steganographic watermark · C2PA Golden Record" },
   ];
 
+  // --- NEW: The actual backend connection ---
+  const uploadToBackend = async (selectedFile) => {
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    try {
+      const response = await fetch("http://localhost:8000/protect-asset", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Protection Pipeline Failed");
+
+      const data = await response.json();
+      console.log("SUCCESS! Backend Response:", data);
+      // You can do something with 'data' here later if you want!
+    } catch (error) {
+      console.error("Upload Error:", error);
+    }
+  };
+
   const simulate = () => {
     if (!file) return;
     setStage(-1);
     setLog([]);
+
+    // --- NEW: Trigger the backend upload simultaneously ---
+    uploadToBackend(file);
+
     const msgs = [
-      `[IDENTITY] Validating Zero Trust token for ${file}...`,
+      `[IDENTITY] Validating Zero Trust token for ${file.name}...`, // Updated to use file.name
       "[IDENTITY] Anti-DoS rate limiter: PASS",
       "[IDENTITY] JWT signature: VERIFIED ✓",
-      `[pHASH] Loading ${file} into VGG16 pipeline...`,
+      `[pHASH] Loading ${file.name} into VGG16 pipeline...`, // Updated to use file.name
       "[pHASH] Extracting deep feature vectors (4096-dim)...",
       "[pHASH] pHASH generated: a3f4bc9e21d7...",
       "[pHASH] Fingerprint indexed in registry ✓",
@@ -140,7 +165,13 @@ export default function IngestionSection() {
         <div
           onDragOver={e => { e.preventDefault(); setDragging(true); }}
           onDragLeave={() => setDragging(false)}
-          onDrop={e => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) setFile(f.name); }}
+          onDrop={e => {
+            e.preventDefault();
+            setDragging(false);
+            const f = e.dataTransfer.files[0];
+            // --- NEW: Store the whole file object, not just f.name ---
+            if (f) setFile(f);
+          }}
           style={{
             minHeight: "220px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
             background: dragging ? `${C.orange}15` : C.dark,
@@ -155,7 +186,8 @@ export default function IngestionSection() {
             <rect x="1" y="12" width="14" height="3" fill={dragging ? C.orange : C.muted} />
           </svg>
           <div className="pixel" style={{ color: dragging ? C.orange : C.muted, fontSize: "1.3rem", textAlign: "center" }}>
-            {file ? `◈ ${file}` : "DROP MEDIA ASSET HERE"}
+            {/* --- NEW: Read from file.name since file is now an object --- */}
+            {file ? `◈ ${file.name}` : "DROP MEDIA ASSET HERE"}
           </div>
           {file && (
             <div style={{ marginTop: "20px", display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
@@ -178,7 +210,7 @@ export default function IngestionSection() {
       {/* Verify manifest button */}
       <div style={{ marginTop: "24px", display: "flex", gap: "16px", alignItems: "center", flexWrap: "wrap" }}>
         <button
-          className="btn-yellow" // This is the magic link to the CSS above!
+          className="btn-yellow"
           onClick={handleVerifyHandshake}
           disabled={verifying}
         >
