@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { C } from "../../constants/theme";
+import { API_BASE_URL } from "../../constants/api";
 
 export default function IngestionSection() {
   const [dragging, setDragging] = useState(false);
@@ -23,7 +24,7 @@ export default function IngestionSection() {
     formData.append("file", selectedFile);
 
     try {
-      const response = await fetch("http://localhost:8000/protect-asset", {
+      const response = await fetch(`${API_BASE_URL}/protect-asset`, {
         method: "POST",
         body: formData,
       });

@@ -3,7 +3,9 @@
 .env.*
 
 # Security: Google Cloud Service Account Credentials
-*.json
+*key*.json
+*credential*.json
+gcp-key.json
 
 # Python standard exclusions
 __pycache__/
@@ -12,5 +14,12 @@ __pycache__/
 venv/
 env/
 .pytest_cache/
-gcp-key.json
+
+# Node/React/Vite exclusions
+node_modules/
+dist/
+dist-ssr/
+.DS_Store
+
+# Frontend specifics
 firebase.js

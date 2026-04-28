@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+pydantic
+google-cloud-firestore
+google-cloud-vision
+google-cloud-storage
+google-generativeai
+httpx
+tensorflow
+numpy
+Pillow
+imagehash
+python-dotenv
+slowapi

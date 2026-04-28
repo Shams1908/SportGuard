@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { C } from "../../constants/theme";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { db } from "../../firebase"; // Ensure this path matches where you put firebase.js
+import { API_BASE_URL } from "../../constants/api";
 
 export default function RadarSection({ onTriggerStrike }) {
   const [scanning, setScanning] = useState(false);
@@ -54,7 +55,7 @@ export default function RadarSection({ onTriggerStrike }) {
     setScanningUrl(true);
     try {
       console.log("FETCH: Sending request to backend...");
-      const response = await fetch("http://localhost:8000/scan-url", {
+      const response = await fetch(`${API_BASE_URL}/scan-url`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
